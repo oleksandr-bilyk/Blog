@@ -114,9 +114,9 @@ public class LazyExpirableFactory {
     new LazyWithLifecycle(NewValueWithLifecycle);
 }
 ```
+Yes, this is now SOLID OOP may look like.
 
-Please note that C# OOP above container just type signatures and didn't contain logic itseto filllf. 
-Now let's look at functional F# signature with mazimally verbose style to help developers who are not familiar with F# well.
+Now let's look at axactly the same logic using F# 
 ```F#
 let lazyWithLifecycle getValueWithLifecycle =
     let newStateLazy () = lazy(getValueWithLifecycle())
@@ -134,4 +134,27 @@ let newTimeSpanLifecyle(timeSpan: TimeSpan) =
     fun () -> createdAt + timeSpan > DateTime.UtcNow
 let lazyTemp get timeSpan = 
     lazyWithLifecycle (fun () -> get(), newTimeSpanLifecyle(timeSpan))
+```
+`lazyWithLifecycle` function is testable because it takes only `getValueWithLifecycle` argument that is function that returns value and lifecycle.
+We also may provice more verbose syntax for F# beginners who are not familiar with type inference.
+```F#
+// Function that returns bool.
+type Lifecycle = unit -> bool
+// Tuple of generic value and lifecycle.
+type ValueWithLifecycle<'TValue> = 'TValue * Lifecycle
+// Function that returns tuple of generic value and lifecycle.
+type GetValueWithLifecycle<'TValue> = unit -> ValueWithLifecycle<'TValue>
+// Result function that returns generic value.
+type LazyGetterResult<'TValue> = unit -> 'TValue
+let lazyWithLifecycle2<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TValue>): LazyGetterResult<'TValue>  =
+    let newStateLazy () = lazy(getValueWithLifecycle())
+    let mutable state: Lazy<ValueWithLifecycle<'TValue>> = newStateLazy()
+    fun () ->
+        let (value: 'TValue, isLive: Lifecycle) = state.Force()
+        if isLive() then value
+        else
+            let newState = newStateLazy()
+            state <- newState
+            let (valueNew: 'TValue, _) = newState.Force()
+            valueNew
 ```
