@@ -7,6 +7,7 @@ Implementation had to have following features:
 1. Be fully testable. Only pure functions may be tested properly.
 2. Be thread-safe.
 Initially I was thinking about C# class. Note that C# code in this article may contains only class signature with method's logic ommited.
+Warning: I will do full SOLID decomposition and we will have many OOP classes and interfaces.
 ```C#
 public class LazyExpirable<TValue> {
   public LazyExpirable(Func<TValue> getValue, DateTime expireOn);
@@ -40,8 +41,46 @@ public class LazyExpirableFactory {
     new LazyExpirable(getValue, expireOn, this.dateTimeProvider);
 }
 ```
+But what if lifecycle will be not just time span between DateTome.UtcNow snapshots? It would be great to have more generic way to define lifecycle. Let's define lifecycle as some object that defines if value is steal alive. Value will be created with lifecycle.
+/// This interface may be injected everywhere where UTC time may be requested.
+public interface ILifecycle {
+  bool IsAlive();
+}
+/// Value 
+public class ValueWithLifecycle<TValue>{
+  public ValueWithLifecycle(TValue value, ILifecycle lifecycle);
+  public TValue Value { get; } 
+  public ILifecycle Lifecycle { get; }
+}
+public interface IDateTimeProvider {
+  DateTime GetUtcNow();
+}
 
-Now let's look at functional F# signature and implementation.
+/// Will be created inside of the factory .
+public class LazyExpirable<TValue> {
+  public LazyExpirable(Func<TValue> getValue, DateTime expireOn, IDateTimeProvider dateTimeProvider);
+  public TValue GetValue();
+}
+/// Factory class may be used with Dependency Injection Container.
+public class LazyExpirableFactory {
+  private readonly IDateTimeProvider dateTimeProvider;
+  public LazyExpirableFactory(IDateTimeProvider dateTimeProvider){
+    this.dateTimeProvider = dateTimeProvider;
+  }
+  public LazyExpirable<TValue> NewLazyExpirable<TValue>(Func<TValue> getValue, DateTime expireOn) =>
+    new LazyExpirable(getValue, expireOn, this.dateTimeProvider);
+}
+```
+
+Please note that C# OOP above container just type signatures and didn't contain logic itseto filllf. 
+Now let's look at functional F# signature with mazimally verbose style to help developers who are not familiar with F# well.
+```F#
+/// Function that returns is 
+type Lifecycle = unit -> bool
+type GetValueWithLifecycle = 
+let lazyWithLifecycle getValueWithLifecycle =
+    <implementation>
+```
 ```F#
 let lazyWithLifecycle getValueWithLifecycle =
     let newStateLazy () = lazy(getValueWithLifecycle())
