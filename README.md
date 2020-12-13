@@ -82,10 +82,24 @@ public class ValueWithLifecycle<TValue>{
 }
 // Now Lazy may be activated with generic lifecycle.
 public class LazyWithLifecycle<TValue> {
-  public LazyExpirable(Func<ValueWithLifecycle<TValue>> getValueWithLifecycle);
+  private readonly Func<ValueWithLifecycle<TValue>> getValueWithLifecycle;
+  private Lazy<ValueWithLifecycle<TValue>> state;
+  public LazyExpirable(Func<ValueWithLifecycle<TValue>> getValueWithLifecycle){
+    this.getValueWithLifecycle = getValueWithLifecycle;
+    this.state = new Lazy<ValueWithLifecycle<TValue>>(getValueWithLifecycle);
+  }
   /// Gets value using lazy loaded value and lifecycle.
-  /// Implementation is steal ommited.
-  public TValue GetValue();
+  public TValue GetValue(){
+    var stateCopy = this.state.Value;
+    if (state.Lifecycle.IsAlive()) {
+      return stateCopy.Value;
+    }
+    else {
+      let newState = new Lazy<ValueWithLifecycle<TValue>>(getValueWithLifecycle);
+      this.state = newState;
+      return newState.Value.Value;
+    }
+  }
 }
 /// Factory class may be used with Dependency Injection Container.
 public class LazyExpirableFactory {
