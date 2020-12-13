@@ -29,7 +29,7 @@ public sealed class DateTimeProvider: IDateTimeProvider {
 }
 /// Will be created inside of the factory .
 public class LazyExpirable<TValue> {
-  public LazyExpirable(Func<TValue> getValue, DateTime expireOn, IDateTimeProvider dateTimeProvider);
+  public LazyExpirable(Func<TValue> getValue, TimeSpan timeSpan, IDateTimeProvider dateTimeProvider);
   public TValue GetValue();
 }
 /// Factory class may be used with Dependency Injection Container.
@@ -53,15 +53,19 @@ public interface ILifecycle {
 public sealed class LifecycleByTime: ILifecycle {
   // Dependency Injection
   private readonly IDateTimeProvider dateTimeProvider;
+  // Initial state.
   private readonly DateTime createdAt;
+  // Lifetyme patameter.
   private readonly TimeSpan timeSpan;
   public LifecycleByTime(IDateTimeProvider dateTimeProvider, TimeSpan timeSpan){
     this.dateTimeProvider = dateTimeProvider;
     this.timeSpan = timeSpan;
     this.createdAt = dateTimeProvider.GetUtcNow();
   }
+  // Is alive when not expired.
   public bool IsAlive() => this.createdAt + this.timeSpan > this.dateTimeProvider.GetUtcNow();
 }
+// We need factory for Dependency Injection.
 public sealed class LifecycleByTimeFactory {
   // Dependency injection
   private readonly IDateTimeProvider dateTimeProvider;
@@ -70,27 +74,30 @@ public sealed class LifecycleByTimeFactory {
   }
   public ILifecycle NewLifecycle(TimeSpan timeSpan) => new LifecycleByTime(this.dateTimeProvider, timeSpan); 
 }
-
 /// Aggrigates values and its lifecycle.
 public class ValueWithLifecycle<TValue>{
   public ValueWithLifecycle(TValue value, ILifecycle lifecycle);
   public TValue Value { get; } 
   public ILifecycle Lifecycle { get; }
 }
-
+// Now Lazy may be activated with generic lifecycle.
 public class LazyWithLifecycle<TValue> {
   public LazyExpirable(Func<ValueWithLifecycle<TValue>> getValueWithLifecycle);
   /// Gets value using lazy loaded value and lifecycle.
+  /// Implementation is steal ommited.
   public TValue GetValue();
 }
 /// Factory class may be used with Dependency Injection Container.
 public class LazyExpirableFactory {
-  private readonly IDateTimeProvider dateTimeProvider;
-  public LazyExpirableFactory(IDateTimeProvider dateTimeProvider){
-    this.dateTimeProvider = dateTimeProvider;
+  private readonly LifecycleByTimeFactory lifecycleByTimeFactory;
+  public LazyExpirableFactory(LifecycleByTimeFactory lifecycleByTimeFactory){
+    this.lifecycleByTimeFactory = lifecycleByTimeFactory;
   }
+  private ValueWithLifecycle<TValue> NewValueWithLifecycle<TValue>(Func<TValue> getValue, TimeSpan timeSpan) => 
+    new ValueWithLifecycle(getValue, lifecycleByTimeFactory.NewLifecycle(timeSpan));
+  
   public LazyExpirable<TValue> NewLazyExpirable<TValue>(Func<TValue> getValue, DateTime expireOn) =>
-    new LazyExpirable(getValue, expireOn, this.dateTimeProvider);
+    new LazyWithLifecycle(NewValueWithLifecycle);
 }
 ```
 
