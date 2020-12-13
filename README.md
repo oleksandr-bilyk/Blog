@@ -11,7 +11,7 @@ Initially I was thinking about C# class. Note that C# code in this article may c
 Warning: I will do full SOLID decomposition and we will have many OOP classes and interfaces.
 ```C#
 public class LazyExpirable<TValue> {
-  public LazyExpirable(Func<TValue> getValue, DateTime expireOn);
+  public LazyExpirable(Func<TValue> getValue, TimeSpan timeSpan);
   public TValue GetValue();
 }
 ```
@@ -233,4 +233,4 @@ You may note that C# OOP SOLID decomposition takes about 100+ lines of code. F# 
 F# is not always much shorter than C#. I was collecting different statistics from many successful companies and found that functional F# is about 5+ times smaller than C# OOP. 
 Here is one of statistics provided by [Don Syme](https://en.wikipedia.org/wiki/Don_Syme).
 ![DonSymeStatistics](/images/DonSymeStatistics.png)
-Last 15 years C# evolves by providing elements of functional programming which is great. However it makes C# look like Chainsaw in comparison to F# Light saber (see [the adult meme on redit](https://www.reddit.com/r/fsharp/comments/gonlnb/f_5_vs_c_9_nsft/) about it). This is the explanation why F# has not become the mainstream.
+Last 15 years C# evolves by providing elements of functional programming which is great. However it makes C# look like Chainsaw in comparison to F# Light Saber (see [the adult meme on redit](https://www.reddit.com/r/fsharp/comments/gonlnb/f_5_vs_c_9_nsft/) about it). This is the explanation why F# has not become the mainstream.
