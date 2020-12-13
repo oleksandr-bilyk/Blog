@@ -1,4 +1,4 @@
-# F# Lazy Load with Expiration
+# Lazy Load with Expiration - C# vs F#
 
 .NET has [Lazy class](https://docs.microsoft.com/en-us/dotnet/api/system.lazy-1?view=net-5.0) .
 F# has [Lazy Expression](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/lazy-expressions).
@@ -7,6 +7,7 @@ Implementation had to have following features:
 1. Be fully testable. Only pure functions may be tested properly.
 2. Be thread-safe.
 Initially I was thinking about C# class. Note that C# code in this article may contains only class signature with method's logic ommited.
+
 Warning: I will do full SOLID decomposition and we will have many OOP classes and interfaces.
 ```C#
 public class LazyExpirable<TValue> {
@@ -23,7 +24,7 @@ Also we need to create a factory class may be used with [Dependency Injection Co
 public interface IDateTimeProvider {
   DateTime GetUtcNow();
 }
-public sealed class DateTimeProvider {
+public sealed class DateTimeProvider: IDateTimeProvider {
   public DateTime GetUtcNow() => DateTime.UtcNow;
 }
 /// Will be created inside of the factory .
@@ -43,23 +44,43 @@ public class LazyExpirableFactory {
 ```
 But what if lifecycle will be not just time span between DateTome.UtcNow snapshots? It would be great to have more generic way to define lifecycle. Let's define lifecycle as some object that defines if value is steal alive. Value will be created with lifecycle.
 ```C#
-/// This interface may be injected everywhere where UTC time may be requested.
+public interface IDateTimeProvider {
+  DateTime GetUtcNow();
+}
 public interface ILifecycle {
   bool IsAlive();
 }
-/// Value 
+public sealed class LifecycleByTime: ILifecycle {
+  // Dependency Injection
+  private readonly IDateTimeProvider dateTimeProvider;
+  private readonly DateTime createdAt;
+  private readonly TimeSpan timeSpan;
+  public LifecycleByTime(IDateTimeProvider dateTimeProvider, TimeSpan timeSpan){
+    this.dateTimeProvider = dateTimeProvider;
+    this.timeSpan = timeSpan;
+    this.createdAt = dateTimeProvider.GetUtcNow();
+  }
+  public bool IsAlive() => this.createdAt + this.timeSpan > this.dateTimeProvider.GetUtcNow();
+}
+public sealed class LifecycleByTimeFactory {
+  // Dependency injection
+  private readonly IDateTimeProvider dateTimeProvider;
+  public LifecycleByTimeFactory(IDateTimeProvider dateTimeProvider){
+    this.dateTimeProvider = dateTimeProvider;
+  }
+  public ILifecycle NewLifecycle(TimeSpan timeSpan) => new LifecycleByTime(this.dateTimeProvider, timeSpan); 
+}
+
+/// Aggrigates values and its lifecycle.
 public class ValueWithLifecycle<TValue>{
   public ValueWithLifecycle(TValue value, ILifecycle lifecycle);
   public TValue Value { get; } 
   public ILifecycle Lifecycle { get; }
 }
-public interface IDateTimeProvider {
-  DateTime GetUtcNow();
-}
 
-/// Will be created inside of the factory .
-public class LazyExpirable<TValue> {
-  public LazyExpirable(Func<TValue> getValue, DateTime expireOn, IDateTimeProvider dateTimeProvider);
+public class LazyWithLifecycle<TValue> {
+  public LazyExpirable(Func<ValueWithLifecycle<TValue>> getValueWithLifecycle);
+  /// Gets value using lazy loaded value and lifecycle.
   public TValue GetValue();
 }
 /// Factory class may be used with Dependency Injection Container.
