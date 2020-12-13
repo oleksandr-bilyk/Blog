@@ -1,4 +1,4 @@
-# Lazy Load with Expiration - C# vs F# - Chainsaw vs Light Saber
+# Lazy Load with Expiration - C# Chainsaw vs F# Light Saber
 
 .NET has [Lazy class](https://docs.microsoft.com/en-us/dotnet/api/system.lazy-1?view=net-5.0) .
 F# has [Lazy Expression](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/lazy-expressions).
