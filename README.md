@@ -9,7 +9,6 @@ Implementation had to have following features:
 
 Initially I was thinking about C# class. Note that C# code in this article may contains only class signature with method's logic ommited.
 
-Warning: I will do full SOLID decomposition and we will have many OOP classes and interfaces.
 ```C#
 public class LazyExpirable<TValue> {
   public LazyExpirable(Func<TValue> getValue, TimeSpan timeSpan);
