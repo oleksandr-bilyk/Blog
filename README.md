@@ -104,13 +104,6 @@ public class LazyExpirableFactory {
 Please note that C# OOP above container just type signatures and didn't contain logic itseto filllf. 
 Now let's look at functional F# signature with mazimally verbose style to help developers who are not familiar with F# well.
 ```F#
-/// Function that returns is 
-type Lifecycle = unit -> bool
-type GetValueWithLifecycle = 
-let lazyWithLifecycle getValueWithLifecycle =
-    <implementation>
-```
-```F#
 let lazyWithLifecycle getValueWithLifecycle =
     let newStateLazy () = lazy(getValueWithLifecycle())
     let mutable state = newStateLazy()
@@ -122,4 +115,9 @@ let lazyWithLifecycle getValueWithLifecycle =
             state <- newState
             let (valueNew: 'a, _) = newState.Force()
             valueNew
+let newTimeSpanLifecyle(timeSpan: TimeSpan) =
+    let createdAt = DateTime.UtcNow
+    fun () -> createdAt + timeSpan > DateTime.UtcNow
+let lazyTemp get timeSpan = 
+    lazyWithLifecycle (fun () -> get(), newTimeSpanLifecyle(timeSpan))
 ```
