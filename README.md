@@ -146,7 +146,7 @@ type ValueWithLifecycle<'TValue> = 'TValue * Lifecycle
 type GetValueWithLifecycle<'TValue> = unit -> ValueWithLifecycle<'TValue>
 // Result function that returns generic value.
 type LazyGetterResult<'TValue> = unit -> 'TValue
-let lazyWithLifecycle2<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TValue>): LazyGetterResult<'TValue>  =
+let lazyWithLifecycle<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TValue>): LazyGetterResult<'TValue>  =
     let newStateLazy () = lazy(getValueWithLifecycle())
     let mutable state: Lazy<ValueWithLifecycle<'TValue>> = newStateLazy()
     fun () ->
@@ -157,4 +157,77 @@ let lazyWithLifecycle2<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TV
             state <- newState
             let (valueNew: 'TValue, _) = newState.Force()
             valueNew
+```
+And the last is the unit test for `lazyWithLifecycle` function. 
+```F#
+module LazyTemporaryTest
+
+open LazyWithLifecyle
+open Xunit
+
+type LazyTempPureState<'v> = 
+    | GetValueWithLifecycle of value: 'v
+    | Lifecyle of result: bool
+    | ResultTest of value: 'v
+
+[<Fact>]
+let ``Test Lazy Temp as steps script`` () =  
+    
+    // List of steps that are function calls 
+    let mutable testScript = [
+        // Return value and with long lifecycle
+        GetValueWithLifecycle 1
+        Lifecyle true
+        ResultTest 1
+        Lifecyle true
+        ResultTest 1
+        Lifecyle true
+        ResultTest 1
+        
+        // Initial lifecycle end and new lifecycle begin
+        Lifecyle false
+        GetValueWithLifecycle 2
+        ResultTest 2
+        Lifecyle true
+        ResultTest 2
+
+        // New lifecycle once again
+        Lifecyle false
+        GetValueWithLifecycle 3
+        ResultTest 3
+    ]
+
+    // gets next step from script list
+    let getScriptStep () =
+        match testScript with
+        | [] -> failwith "Any step expected."
+        | head::tail -> 
+            // Remove list head from script
+            testScript <- tail
+            head
+
+    let hasScriptSteps() = testScript <> []
+
+    // Lifecycle function call that tests that head script step is expected lifecycle test
+    let lifecycle () =
+        match getScriptStep() with
+        | Lifecyle l -> l
+        | _ -> failwith "Lifecyle expected."
+
+    // LazyTemp function call that tests creation of new value with lifecycle
+    let getValueWithLifecycle () =
+        match getScriptStep() with
+        | GetValueWithLifecycle v -> v, lifecycle
+        | _ -> failwith "CallGetValue expected."
+
+    // construct lazy temp value
+    let valueLazyTemp = lazyWithLifecycle getValueWithLifecycle
+
+    // test to the end of the script
+    while hasScriptSteps() do
+        let resuldActual = valueLazyTemp()
+        match getScriptStep() with
+        | ResultTest re ->  Assert.True((resuldActual = re))
+        | _ -> failwith "ResultTest expected."
+
 ```
