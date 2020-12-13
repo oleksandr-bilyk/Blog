@@ -4,7 +4,7 @@
 F# has [Lazy Expression](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/lazy-expressions).
 Had tried to create Lazy load of some object with expiration (e.g. configuration with refresh timeout).
 Implementation had to have following features:
-1. Be fully testable. Only pure functions may be tested properly.
+1. Be fully testable. Only pure functions may be tested properly because they have fully deterministic behavior.
 2. Be thread-safe.
 Initially I was thinking about C# class. Note that C# code in this article may contains only class signature with method's logic ommited.
 
@@ -15,7 +15,7 @@ public class LazyExpirable<TValue> {
   public TValue GetValue();
 }
 ```
-However such C# class will not be testable because somewhere inside of `GetValue()` method we will need to call `System.DateTime.UtcNow` that makes our logic not pure and not testable.
+Such C# class will not be testable because somewhere inside of `GetValue()` method we will need to call `System.DateTime.UtcNow` that makes our logic not pure and not testable.
 To solve this in OOP paradigm we need to use [Dependency Injection](https://www.goodreads.com/book/show/9407722-dependency-injection-in-net).
 We need to create interface that will let to get current time. Also we will have to update our LazyExpirable class signature.
 Also we need to create a factory class may be used with [Dependency Injection Container](https://docs.microsoft.com/en-us/dotnet/core/extensions/dependency-injection).
@@ -116,19 +116,17 @@ public class LazyExpirableFactory {
 ```
 Yes, this is now SOLID OOP may look like.
 
-Now let's look at axactly the same logic using F# 
+Now let's look at axactly the same logic using F#. F# support .NET OOP Dependency Injection but we may compose our logic using more functional technique called [Dependency Rejection](https://blog.ploeh.dk/2017/02/02/dependency-rejection/).
 ```F#
 let lazyWithLifecycle getValueWithLifecycle =
-    let newStateLazy () = lazy(getValueWithLifecycle())
-    let mutable state = newStateLazy()
+    let mutable state = lazy(getValueWithLifecycle())
     fun () ->
         let value, isLive = state.Force()
         if isLive() then value
         else
-            let newState = newStateLazy()
+            let newState = lazy(getValueWithLifecycle())
             state <- newState
-            let (valueNew: 'a, _) = newState.Force()
-            valueNew
+            newState.Force() |> fst
 let newTimeSpanLifecyle(timeSpan: TimeSpan) =
     let createdAt = DateTime.UtcNow
     fun () -> createdAt + timeSpan > DateTime.UtcNow
@@ -136,7 +134,7 @@ let lazyTemp get timeSpan =
     lazyWithLifecycle (fun () -> get(), newTimeSpanLifecyle(timeSpan))
 ```
 `lazyWithLifecycle` function is testable because it takes only `getValueWithLifecycle` argument that is function that returns value and lifecycle.
-We also may provice more verbose syntax for F# beginners who are not familiar with type inference.
+Let's consider more verbose syntax for F# beginners who are not familiar with F# type inference.
 ```F#
 // Function that returns bool.
 type Lifecycle = unit -> bool
@@ -147,7 +145,7 @@ type GetValueWithLifecycle<'TValue> = unit -> ValueWithLifecycle<'TValue>
 // Result function that returns generic value.
 type LazyGetterResult<'TValue> = unit -> 'TValue
 let lazyWithLifecycle<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TValue>): LazyGetterResult<'TValue>  =
-    let newStateLazy () = lazy(getValueWithLifecycle())
+    let newStateLazy () = 
     let mutable state: Lazy<ValueWithLifecycle<'TValue>> = newStateLazy()
     fun () ->
         let (value: 'TValue, isLive: Lifecycle) = state.Force()
@@ -158,7 +156,7 @@ let lazyWithLifecycle<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TVa
             let (valueNew: 'TValue, _) = newState.Force()
             valueNew
 ```
-And the last is the unit test for `lazyWithLifecycle` function. 
+Now let's write test for `lazyWithLifecycle` function. 
 ```F#
 module LazyTemporaryTest
 
@@ -231,3 +229,7 @@ let ``Test Lazy Temp as steps script`` () =
         | _ -> failwith "ResultTest expected."
 
 ```
+You may note that C# OOP SOLID decomposition takes about 100+ lines of code. F# functional takes less than 20 lines of code. 
+F# is not always much shorter than C#. I was collecting different statistics from many successful companies and found that functional F# is about 5+ times smaller than C# OOP. 
+
+Last 15 years C# evolves by providing elements of functional programming. 
