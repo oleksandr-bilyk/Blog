@@ -6,7 +6,7 @@ Had tried to create Lazy load of some object with expiration (e.g. configuration
 Implementation had to have following features:
 1. Be fully testable. Only pure functions may be tested properly.
 2. Be thread-safe.
-Initially I was thinking about C# class. Note that C# code in this article contains only class signature with method's logic ommited.
+Initially I was thinking about C# class. Note that C# code in this article may contains only class signature with method's logic ommited.
 ```C#
 public class LazyExpirable<TValue> {
   public LazyExpirable(Func<TValue> getValue, DateTime expireOn);
@@ -22,23 +22,31 @@ Also we need to create a factory class may be used with [Dependency Injection Co
 public interface IDateTimeProvider {
   DateTime GetUtcNow();
 }
-/// Factory class may be used with Dependency Injection Container.
-public class LazyExpirableFactory {
-  public LazyExpirableFactory(IDateTimeProvider dateTimeProvider);
-  public LazyExpirable<TValue> NewLazyExpirable<TValue>(Func<TValue> getValue, DateTime expireOn);
+public sealed class DateTimeProvider {
+  public DateTime GetUtcNow() => DateTime.UtcNow;
 }
+/// Will be created inside of the factory .
 public class LazyExpirable<TValue> {
-  public LazyExpirable(Func<TValue> getValue, DateTime expireOn);
+  public LazyExpirable(Func<TValue> getValue, DateTime expireOn, IDateTimeProvider dateTimeProvider);
   public TValue GetValue();
 }
+/// Factory class may be used with Dependency Injection Container.
+public class LazyExpirableFactory {
+  private readonly IDateTimeProvider dateTimeProvider;
+  public LazyExpirableFactory(IDateTimeProvider dateTimeProvider){
+    this.dateTimeProvider = dateTimeProvider;
+  }
+  public LazyExpirable<TValue> NewLazyExpirable<TValue>(Func<TValue> getValue, DateTime expireOn) =>
+    new LazyExpirable(getValue, expireOn, this.dateTimeProvider);
+}
 ```
+
+Now let's look at functional F# signature and implementation.
 ```F#
 let lazyWithLifecycle getValueWithLifecycle =
-    // new lazy tuple of lazy value and activation time
     let newStateLazy () = lazy(getValueWithLifecycle())
     let mutable state = newStateLazy()
-
-    let resultFunction () =
+    fun () ->
         let value, isLive = state.Force()
         if isLive() then value
         else
@@ -46,7 +54,4 @@ let lazyWithLifecycle getValueWithLifecycle =
             state <- newState
             let (valueNew: 'a, _) = newState.Force()
             valueNew
-    
-    // Return function with muttable state closuring
-    resultFunction
 ```
