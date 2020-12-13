@@ -42,6 +42,7 @@ public class LazyExpirableFactory {
 }
 ```
 But what if lifecycle will be not just time span between DateTome.UtcNow snapshots? It would be great to have more generic way to define lifecycle. Let's define lifecycle as some object that defines if value is steal alive. Value will be created with lifecycle.
+```C#
 /// This interface may be injected everywhere where UTC time may be requested.
 public interface ILifecycle {
   bool IsAlive();
