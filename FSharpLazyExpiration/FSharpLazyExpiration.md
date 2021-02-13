@@ -9,20 +9,18 @@ Implementation had to have following features:
 
 Initially I was thinking about C# class. Note that C# code in this article may contains only class signature with method's logic ommited.
 
-{% highlight text %}
-```C#
+```csharp
 public class LazyExpirable<TValue> {
   public LazyExpirable(Func<TValue> getValue, TimeSpan timeSpan);
   public TValue GetValue();
 }
 ```
-{% endhighlight %}
 
 Such C# class will not be testable because somewhere inside of `GetValue()` method we will need to call `System.DateTime.UtcNow` that makes our logic not pure and not testable.
 To solve this in OOP paradigm we need to use [Dependency Injection](https://www.goodreads.com/book/show/9407722-dependency-injection-in-net).
 We need to create interface that will let to get current time. Also we will have to update our LazyExpirable class signature.
 Also we need to create a factory class may be used with [Dependency Injection Container](https://docs.microsoft.com/en-us/dotnet/core/extensions/dependency-injection).
-```C#
+```csharp
 /// This interface may be injected everywhere where UTC time may be requested.
 public interface IDateTimeProvider {
   DateTime GetUtcNow();
