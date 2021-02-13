@@ -1,8 +1,8 @@
 # Azure AppService HttpClientFactory - use cached but fresh http message handlers.
 
 There is one trend in technical industry: recommendations are intended to be elevated to requirements. Times when developers read documentation from cover to cover are long gone and we have to react for issues that a platform enforces. 
-Migration from Service Fabric clusters running on Virtual Machine Scale Set to Azure AppService enforces more strict requirements to .NET outbound connection practices. In 2015 first generation of AppService was running on dedicated VM was more like running on VM.
-Today Azure AppService (2020+) (WebSites and AzureFunction) work in environment has SNAT ports restrictions. MSDN articles sometimes are controversial. It has taken to read many of them, practice codding, read source code and debug DefaultHttpClientFactory internals to figure out universal codding practice:
+Migration from Service Fabric clusters running on Virtual Machine Scale Set to Azure AppService enforces more strict requirements to .NET outbound connection practices. In 2015 first generation of AppService was running on dedicated VMs.
+Modern Azure AppService (2020+) (WebSites and AzureFunction) work in environment has 128 SNAT ports limit. MSDN articles sometimes are controversial. It has taken to read many of them, practice codding, read source code and debug DefaultHttpClientFactory internals to figure out universal codding practice:
 1. Use cached but fresh http message handlers
    1. Do not create HttpClient using its constructor because it creates many HttpMessageHandlers and reaches SNAT ports limit.
    2. Don't use HttpClient singleton because it makeslinked HttpMessageHandlers not fresh and may cause DNS problems. 
@@ -10,6 +10,10 @@ Today Azure AppService (2020+) (WebSites and AzureFunction) work in environment 
 3. Use clients only in transient way only (for operations that take not longer than few minutes). 
    1. IHttpClientFactory.CreateClient() to create HttpClient and use it only in with transient lifecycle. HttpClient contains hard link to HttpMessageHandler. You may dispose HttpClient created by IHttpClientFactory but that will not dispose referenced HttpMessageHandler. [Typed HttpClient](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-5.0#typed-clients) is also for transient only approach. DefaultHttpClientFactory caches HttpMessageHandler after IHttpClientFactory.CreateClient() infocation for 2 minutes. Transient ussage of HttpClient will guarantee that cached but fresh handlers will be used.
    2. Use IHttpMessageHandlerFactory.CreateHandler() to create HttpMessageHandler that may be used for transient connection wrappers (e.g. [DocumentClient](https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.documents.client.documentclient.-ctor?view=azure-dotnet), [KeyVaultClient](https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.keyvault.keyvaultclient.-ctor?view=azure-dotnet-legacy)).
+4. If you realy need to out of SNAT ports limit on AppService then consider few options. 
+   1. Use [App Service Environments](https://docs.microsoft.com/en-us/azure/app-service/environment/intro)
+   2. Use [NAT Gateways](https://docs.microsoft.com/en-us/azure/virtual-network/nat-gateway-resource), service endpoints, private endpoints to avoid SNAT restrictions.
+   3. Use other protocol connection pools (e.g. SQL connection pools).
 
 Here is the list of articles and key concepts that it is possible to mine from them:
 - [Use IHttpClientFactory to implement resilient HTTP requests](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
