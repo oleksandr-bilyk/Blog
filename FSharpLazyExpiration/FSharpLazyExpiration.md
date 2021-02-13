@@ -232,5 +232,5 @@ let ``Test Lazy Temp as steps script`` () =
 You may note that C# OOP SOLID decomposition takes about 100+ lines of code. F# functional takes less than 20 lines of code. 
 F# is not always much shorter than C#. I was collecting different statistics from many successful companies and found that functional F# is about 5+ times smaller than C# OOP. 
 Here is one of statistics provided by [Don Syme](https://en.wikipedia.org/wiki/Don_Syme).
-![DonSymeStatistics](/images/DonSymeStatistics.png)
+![DonSymeStatistics](./images/DonSymeStatistics.png)
 Last 15 years C# evolves by providing elements of functional programming which is great. However it makes C# look like Chainsaw in comparison to F# Light Saber (see [the adult meme on redit](https://www.reddit.com/r/fsharp/comments/gonlnb/f_5_vs_c_9_nsft/) about it). This is the explanation why F# has not become the mainstream.
