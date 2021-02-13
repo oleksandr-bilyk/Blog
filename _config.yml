@@ -1,1 +1,3 @@
-theme: None
+theme: jekyll-theme-slate
+syntax-highlighting:
+  enabled : true
