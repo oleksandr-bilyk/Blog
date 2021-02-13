@@ -44,7 +44,7 @@ public class LazyExpirableFactory {
 }
 ```
 But what if lifecycle will be not just time span between DateTome.UtcNow snapshots? It would be great to have more generic way to define lifecycle. Let's define lifecycle as some object that defines if value is steal alive. Value will be created with lifecycle.
-```C#
+```csharp
 public interface IDateTimeProvider {
   DateTime GetUtcNow();
 }
@@ -118,7 +118,7 @@ public class LazyExpirableFactory {
 Yes, this is now SOLID OOP may look like.
 
 Now let's look at axactly the same logic using F#. F# support .NET OOP Dependency Injection but we may compose our logic using more functional technique called [Dependency Rejection](https://blog.ploeh.dk/2017/02/02/dependency-rejection/).
-```F#
+```fsharp
 let lazyWithLifecycle getValueWithLifecycle =
     let mutable state = lazy(getValueWithLifecycle())
     fun () ->
@@ -136,7 +136,7 @@ let lazyTemp get timeSpan =
 ```
 `lazyWithLifecycle` function is testable because it takes only `getValueWithLifecycle` argument that is function that returns value and lifecycle.
 Let's consider more verbose syntax for F# beginners who are not familiar with F# type inference.
-```F#
+```fsharp
 // Function that returns bool.
 type Lifecycle = unit -> bool
 // Tuple of generic value and lifecycle.
@@ -158,7 +158,7 @@ let lazyWithLifecycle<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TVa
             valueNew
 ```
 Now let's write test for `lazyWithLifecycle` function. 
-```F#
+```fsharp
 module LazyTemporaryTest
 
 open LazyWithLifecyle
