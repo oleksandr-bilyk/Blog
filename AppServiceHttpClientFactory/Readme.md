@@ -16,6 +16,7 @@ Modern Azure AppService (2020+) (WebSites and AzureFunction) work in environment
    3. Use other protocol connection pools (e.g. SQL connection pools).
 
 Here is the list of articles and key concepts that it is possible to mine from them:
+- [DI scopes in IHttpClientFactory message handlers don't work like you think they do](https://andrewlock.net/understanding-scopes-with-ihttpclientfactory-message-handlers/)This one is good deep article that proves results of our debugging.
 - [Use IHttpClientFactory to implement resilient HTTP requests](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
   Provides general practice is to use IHttpClientFactory with dependency injection.
 - [Make HTTP requests using IHttpClientFactory in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-5.0) 
@@ -24,4 +25,3 @@ Here is the list of articles and key concepts that it is possible to mine from t
   Contains symptoms, cause and general recomendations to avoid problems.
 - [Manage connections in Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/manage-connections) provides wrong recommendation to use singleton for HttpClient and CosmosClient because it may cause [DNS issue](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-5.0#named-clients). Azure Functions support [Dependency Injection](https://docs.microsoft.com/en-us/azure/azure-functions/functions-dotnet-dependency-injection) and [IHttpClientFactory](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-5.0) can be injected.
 - [Improper Instantiation antipattern](https://docs.microsoft.com/en-us/azure/architecture/antipatterns/improper-instantiation/) another MSDN article that recomends to use singleton that fixes SNAT ports issue bug creates DNS issue.
-- [DI scopes in IHttpClientFactory message handlers don't work like you think they do](https://andrewlock.net/understanding-scopes-with-ihttpclientfactory-message-handlers/)This one is good deep article that proves results of our debugging.
