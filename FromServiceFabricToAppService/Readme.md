@@ -1,6 +1,6 @@
-# From Service Fabric to App Service - The Service Fabric Redemption
+# From Service Fabric to App Service
 Service Fabric is very powerful PaaS that is ground for many fundamental services in Azure and beyond. However there are issues in its maintenance and general development experience. To be more production I was working PaaS migration from Service Fabric to App Service. This document contains retrospective of challenges that I had on this way.
-- [From Service Fabric to App Service - The Service Fabric Redemption](#from-service-fabric-to-app-service---the-service-fabric-redemption)
+- [From Service Fabric to App Service](#from-service-fabric-to-app-service)
   - [Why to go from Service Fabric](#why-to-go-from-service-fabric)
     - [My Service Fabric larning path](#my-service-fabric-larning-path)
     - [Service Fabric issues](#service-fabric-issues)
