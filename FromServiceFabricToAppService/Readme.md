@@ -40,7 +40,7 @@ Cover lots of topics deeply:
         * Marker interfaces. Problem for dependency Injection and violation of [.NET Framework Design Guidelines](https://www.amazon.com/Framework-Design-Guidelines-Conventions-Libraries/dp/0321246756/ref=sr_1_2?dchild=1&keywords=framework+design+guidelines&qid=1624980035&sr=8-2)  
         * Remouting - coupling to network communication. Better to use HTTP service discovery.
         * Service Fabric Mesh never become mature - Kubernates wins.
-  4. Service Fabric SDK - generally speaking it has lots of bugs for many years
+  4. Service Fabric SDK
        * SDK didn't work for weeks and I waited for pathes.
        * SDK updates installation was enforced and there were no way to escape.
        * SDK frizzes and PC restart is required few times a day.
