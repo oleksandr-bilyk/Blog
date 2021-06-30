@@ -33,8 +33,6 @@ Cover lots of topics deeply:
    * Containers - the "Future of Service Fabric".
 4. [Inside Azure Service Fabric - video series](https://www.youtube.com/watch?v=oIdkbdlnmbw&list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb) Service Fabric PMs meet different customers. Highly recommend to watch specially [Cesar Ruiz-Meraz: Azure Event Hubs](https://www.youtube.com/watch?v=OxXGnbHAXB0&list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&index=3). After watching ask yourself as architect: How would you as an Architect design EventGrid/ApatchKafka cluster without Service Fabric?
 ![EventHubInsidesVideo](Images/EventHubInsidesVedeo.png)
-
-In one of latest videos Chacko Daniel (Service Fabric PM) describes Service Fabric bright future and says that he wants Service Fabric be closer to customer and be primary container orchestration with many auxiliary microservices (e.g. Secrets Vault servie). Chacko Daniel leaves the company few months later - me and many other didn't have Service Fabric future confidence.
 ### Service Fabric issues
   1.  General infrastructure Complexity - read at least half of the book before making decision to use it.
   2.  Stateful services maintenance - I have not found it in the book but found it in one of conference videos. Service Fabric Stateful Service is literally database engine running on Service Fabric nodes. Service Fabric generates replicatable transaction log which must be trancatenated. To understand how database transaction logs are implemented read [SQL Server Internals](https://www.amazon.com/Microsoft%C2%AE-Server%C2%AE-Internals-Developer-Reference/dp/0735626243/ref=sr_1_5?dchild=1&keywords=sql+server+internals+book&qid=1624974027&sr=8-5) book. 
