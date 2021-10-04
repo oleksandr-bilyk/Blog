@@ -15,23 +15,7 @@ This document contains concept of Managed Secret that is kind of service that ex
 - Allocation is double phase commit process of insert secret into DB and SecretVault.
 - Arch is managed secret entity that is guarantee consistency of set, get, renew and remove operations.
 
-::: mermaid
-sequenceDiagram
-    participant Client
-    participant Allocation
-    participant Arch
-    participant Vault
-
-    Client ->> Allocation: SetSecret
-    Allocation ->> Vault : SetSecret
-    Allocation ->> Arch: SetSecret
-    Client ->> Arch: GetSecret
-    Arch ->> Vault : GetSecret
-    Vault -->> Arch: Secret
-    Arch -->> Client: Secret
-    Note right of Arch: When secret expired
-    Arch ->> Vault: RemoveSecret 
-:::
+![Concept](./GeneralConcept.png)
 
 ## Cron
 Chron provides deferred operations. Analog or Azure ServiceBuss deferred message but doesn't not depend on Azure. It can be implemented as No-SQL change feed.
@@ -42,25 +26,7 @@ Chron is internal mechanism that is not visible for client but is used by Alloca
 - ScheduleObserver - Schedule_DB change feed listening procedure.
 - Scanner - Infinite loop procedure, preferably single instance with [leader election](https://docs.microsoft.com/en-us/azure/architecture/patterns/leader-election) that query Schedule_DB to filter active records.
 
-::: mermaid
-sequenceDiagram
-
-    participant Consumer
-    participant Schedule_DB
-    participant ScheduleObserver
-    participant Scanner
-  
-    Consumer ->> Schedule_DB : Insert row with State=Delayed
-    Schedule_DB ->> ScheduleObserver : delated task inserted.
-    ScheduleObserver ->> ScheduleObserver : ignore delayed row.
-
-    Note left of Scanner: Scanner interval
-    Scanner ->> Schedule_DB : Get top N pending records (where State=Delayed AND DelayedUntil <= NowUtc)
-    Scanner ->> Schedule_DB : Insert all pending tasks with State=Pending
-    
-    Schedule_DB -->> ScheduleObserver: Task with State=Pending inserted
-    ScheduleObserver -->> Consumer: The task with State=Pending
-:::
+![Cron](./Cron.png)
 
 # Allocation transaction
 
@@ -86,133 +52,17 @@ To remove all legacy secrets it is possible to register then for removing using 
 
 ## Allocation two phase transaction Committed - AllocationRequested, keyVaultSet and AllocationCompleted completed.
 
-::: mermaid
-sequenceDiagram
-    participant Client
-    participant AllocationTransaction
-    participant AllocationEvent_DB
-    participant AllocationEventObserver
-    participant Cron
-    participant Vault
-    participant Arch
-  
-    Client ->> AllocationTransaction: Set secret
-    Note right of AllocationTransaction: Begin transaction
-    AllocationTransaction ->> AllocationEvent_DB: Insert AllocationRequested
-    AllocationEvent_DB -->> AllocationEventObserver: AllocationRequested 
-    AllocationEventObserver ->> Cron : Audit in 5 min
-    AllocationTransaction ->> Vault: SetSecret
-    AllocationTransaction ->> AllocationEvent_DB: Insert AllocationCompleted
-    Note right of AllocationTransaction: End transaction
-    AllocationEvent_DB -->> AllocationEventObserver: AllocationCompleted 
-    AllocationEventObserver ->> Arch: SetSecret
-
-    Note left of Cron: 5 min later
-    Cron -->> AllocationEvent_DB: Insert Audit
-    AllocationEvent_DB ->> AllocationEventObserver : Audit
-    AllocationEventObserver ->>  AllocationEvent_DB : Get by secret id
-    AllocationEventObserver ->> AllocationEventObserver: Audit validated
-:::
+![AllocationTwoPhaseCommit](./AllocationTwoPhaseCommit.png)
 
 ## Allocation transaction rollback - AllocationRequested but no progress anymore.
 
-::: mermaid
-sequenceDiagram
-    participant Client
-    participant AllocationTransaction
-    participant AllocationEvent_DB
-    participant AllocationEventObserver
-    participant Cron
-    participant Vault
-  
-    Client ->> AllocationTransaction: Set secret
-    Note right of AllocationTransaction: Begin transaction
-    AllocationTransaction ->> AllocationEvent_DB: Insert AllocationRequested
-    AllocationEvent_DB -->> AllocationEventObserver: AllocationRequested 
-    AllocationEventObserver ->> Cron : Audit in 5 min
-
-    Note left of Cron: 5 min later
-    Cron -->> AllocationEvent_DB: Insert Audit
-    AllocationEvent_DB ->> AllocationEventObserver : Audit
-    AllocationEventObserver ->>  AllocationEvent_DB : Get by secret id
-    AllocationEventObserver ->> AllocationEventObserver : Abandoned allocation detected
-    AllocationEventObserver ->>  AllocationEvent_DB : Insert AllocationCancelled
-    AllocationEvent_DB -->> AllocationEventObserver: AllocationCancelled
-    AllocationEventObserver ->> Vault: Remove
-    Vault -->> AllocationEventObserver: None
-:::
+![AllocationTransactionRollbackAfterPhase1](./AllocationTransactionRollbackAfterPhase1.png)
 
 ## Allocation transaction rollback - AllocationRequested, keyVaultSet but no completion.
 
-::: mermaid
-sequenceDiagram
-    participant Client
-    participant AllocationTransaction
-    participant AllocationEvent_DB
-    participant AllocationEventObserver
-    participant Cron
-    participant Vault
-  
-    Client ->> AllocationTransaction: Set secret
-    Note right of AllocationTransaction: Begin transaction
-    AllocationTransaction ->> AllocationEvent_DB: Insert AllocationRequested
-    AllocationEvent_DB -->> AllocationEventObserver: AllocationRequested 
-    AllocationEventObserver ->> Cron : Audit in 5 min
-    AllocationTransaction ->> Vault: SetSecret
-
-    Note left of Cron: 5 min later
-    Cron ->> AllocationEvent_DB: Insert Audit
-    AllocationEvent_DB -->> AllocationEventObserver : Audit
-    AllocationEventObserver ->>  AllocationEvent_DB : Get by secret id
-    AllocationEventObserver ->> AllocationEventObserver : Abandoned allocation detected
-    AllocationEventObserver ->>  AllocationEvent_DB : Insert AllocationCancelled
-    AllocationEvent_DB -->> AllocationEventObserver: AllocationCancelled
-    AllocationEventObserver ->> Vault: Remove
-    Vault -->> AllocationEventObserver: Removed
-:::
+![AllocationTransactionRollbackAfterPhase2](./AllocationTransactionRollbackAfterPhase2.png)
 
 ## Arch
 Arch is managed secret entity that is guarantee consistency of set, get, renew and remove operations. Note that Arch service doesn't update Vault itself. If command comes from Allocation to Arch that means that secret is already stored in Vault. When arch decides that secret can be deallocated it calls Deallocation service to defer secret removal. It will provide secret read consistency because if secret in arch is marked as actual then Vault secret will be available for read from Vault at least for few minutes.
 
-::: mermaid
-sequenceDiagram
-    participant Allocation
-    participant ArchCommand_DB
-    participant ArchCommandObserver
-    participant ArchEvent_DB
-    participant ArchEventObserver
-    participant Cron
-    participant Vault
-  
-    Allocation ->> ArchCommand_DB: Insert SetSecret 1
-    ArchCommand_DB -->> ArchCommandObserver: SetSecret 1
-    ArchCommandObserver ->> ArchEvent_DB: Insert SecretSet 1
-    ArchEvent_DB -->> ArchEventObserver: SecretSet 1
-    ArchEventObserver ->> Cron: Schedule DisposeSecret 1 in 7 days
-
-    Allocation ->> ArchCommand_DB: Insert SetSecret 2
-    ArchCommand_DB -->> ArchCommandObserver: SetSecret 2
-    ArchCommandObserver ->> ArchEvent_DB: Insert SecretSet 2
-    ArchCommandObserver ->> ArchEvent_DB: Insert SecretDisposed 1
-    ArchEvent_DB -->> ArchEventObserver: SecretSet 2
-    ArchEventObserver ->> Cron: Schedule DisposeSecret 2 in 7 days
-    ArchEvent_DB -->> ArchEventObserver: SecretDisposed 1
-    ArchEventObserver ->> Cron: Schedule RemoveSecret 1 in 5 min
-    Note left of Cron: Deferred RemoveSecret interval
-    Cron ->> Vault: RemoveSecret 1
-
-    Note left of Cron: After Secret 1 expiration
-    Cron ->> ArchCommand_DB: Insert DisposeSecret 1
-    ArchCommand_DB -->> ArchCommandObserver: DisposeSecret 1
-    ArchCommandObserver ->> ArchCommandObserver: Secret 1 was already disposed
-
-    Note left of Cron: After Secret 2 expiration
-    Cron ->> ArchCommand_DB: Insert DisposeSecret 2
-    ArchCommand_DB -->> ArchCommandObserver: DisposeSecret 2
-    ArchCommandObserver ->> ArchEvent_DB: Insert SecretDisposed 2
-    ArchEvent_DB -->> ArchEventObserver: SecretDisposed 2
-    ArchEventObserver ->> Cron: Schedule RemoveSecret 2 in 5 min
-    Note left of Cron: Deferred RemoveSecret interval
-    Cron ->> Vault: RemoveSecret 1
-
-:::
+![Arch](./Arch.png)
