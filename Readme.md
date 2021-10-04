@@ -1,5 +1,10 @@
 # Oleksandr Bilyk - software developer, solution architect, system thinker. 
 
+### [Secret Arch](./SecretArch/Readme.md)
+*Sep 04, 2021*
+
+Azure KeyVault is Azure service for storing secrets. Let's imagine that we need to remove secrets after their expiration that KeyVault doesn't provide. It would be nice to design KeyVault decorator service that will provide missing features. Let's use Event Sourcing and CosmosDB Change feed for such purposes.
+
 ### [F# Lazy Expiration](./FSharpLazyExpiration/Readme.md)
 *Feb 13, 2021*
 
