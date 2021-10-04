@@ -1,6 +1,5 @@
-# Oleksandr Bilyk coding articles
-4. [F# Lazy Expiration](./FSharpLazyExpiration/Readme.md)
-3. [From Service Fabric to App Service](./FromServiceFabricToAppService/Readme.md)
+### [F# Lazy Expiration](./FSharpLazyExpiration/Readme.md)
+### [From Service Fabric to App Service](./FromServiceFabricToAppService/Readme.md)
 ### [Http Client Factory](./AppServiceHttpClientFactory/Readme.md)
 *Feb 14, 2021*
 
