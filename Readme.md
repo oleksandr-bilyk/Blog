@@ -2,7 +2,7 @@
 ### [From Service Fabric to App Service](./FromServiceFabricToAppService/Readme.md)
 ### [Http Client Factory](./AppServiceHttpClientFactory/Readme.md)
 *Feb 14, 2021*
-
+Article describes HttpClientFactory usage best practices. Ignoring network connections allocation recommendations cause networking issues on Azure App Service and not only there. 
 
 ### [Windows Application Block](https://github.com/oleksandr-bilyk/WindowsApplicationBlock) 
 *Jun 4, 2017*
