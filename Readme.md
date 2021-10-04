@@ -1,4 +1,4 @@
-# Oleksandr Bilyk - software developer, solution architect, system thinkerer. 
+# Oleksandr Bilyk - software developer, solution architect, system thinker. 
 
 ### [F# Lazy Expiration](./FSharpLazyExpiration/Readme.md)
 *Feb 13, 2021*
