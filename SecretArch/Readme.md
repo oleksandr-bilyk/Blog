@@ -1,4 +1,4 @@
-Azure KeyVault is Azure service for storing secrets. Let's imagine that we need to remove secrets after their expiration that KeyVault doesn't provide. It would be nice to design KeyVault decorator service that will provide missing features. Let's even think about solution that will allow to manage secret lifetime and will use abstract Secret Vault that will run not Azure or onpremise server. I called such concept as Secret Arch. 
+Azure KeyVault is Azure service for storing secrets. Let's imagine that we need to remove secrets after their expiration that KeyVault doesn't provide. It would be nice to design KeyVault decorator service that will provide missing features. Let's even think about solution that will allow to manage secret lifetime. I called such concept as Secret Arch. 
 KeyVault or other secret vault capabilities may be extended by secret managing service that will provide additional lifetime features.
 This document contains concept of Managed Secret that is kind of service that extends basic abstract 
 ## Secret Vault features:
@@ -7,7 +7,6 @@ This document contains concept of Managed Secret that is kind of service that ex
 1. Secrets may expire after some period and must be removed.
 1. All operations should be transactional and provide eventual consistency of all aggregates. 
 1. SLA near to CosmosDb which is P99.
-1. No dependency on Azure only services (e.g. Service Buss) to let run in out of Azure.
 1. Underlying Secret Vault is abstract storage with limited API just to setSecret, getSecret, removeSecret. Other alternatives to KeyVault may be used.
 
 ## Concepts
@@ -18,7 +17,7 @@ This document contains concept of Managed Secret that is kind of service that ex
 ![Concept](./GeneralConcept.png)
 
 ## Cron
-Chron provides deferred operations. Analog or Azure ServiceBuss deferred message but doesn't not depend on Azure. It can be implemented as No-SQL change feed.
+Chron provides deferred operations. Analog or Azure ServiceBuss deferred message but build using CosmosDB change feed. It can be implemented as No-SQL change feed.
 Chron is internal mechanism that is not visible for client but is used by Allocation, Arch and deallocation services.
 
 - Consumer - procedure that requests some task to be scheduled
