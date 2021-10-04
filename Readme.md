@@ -1,7 +1,13 @@
 ### [F# Lazy Expiration](./FSharpLazyExpiration/Readme.md)
+
 ### [From Service Fabric to App Service](./FromServiceFabricToAppService/Readme.md)
+*Jun 30, 2021*
+
+Service Fabric is super powerful PAAS that was not polished by open source comunity to have a good usage expirience. Article contains story of moving few microservices from Service Fabric to App Service. It is story about how importantce dependency inversion architectural princyple helps to build platform agnostic solutions.
+
 ### [Http Client Factory](./AppServiceHttpClientFactory/Readme.md)
 *Feb 14, 2021*
+
 Article describes HttpClientFactory usage best practices. Ignoring network connections allocation recommendations cause networking issues on Azure App Service and not only there. 
 
 ### [Windows Application Block](https://github.com/oleksandr-bilyk/WindowsApplicationBlock) 
