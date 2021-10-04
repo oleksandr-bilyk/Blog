@@ -1,4 +1,9 @@
+# Oleksandr Bilyk - software developer, solution architect, system thinkerer. 
+
 ### [F# Lazy Expiration](./FSharpLazyExpiration/Readme.md)
+*Feb 13, 2021*
+
+Comparison of OOP and Functional looks at one problem with resource usage.
 
 ### [From Service Fabric to App Service](./FromServiceFabricToAppService/Readme.md)
 *Jun 30, 2021*
@@ -9,6 +14,8 @@ Service Fabric is super powerful PAAS that was not polished by open source comun
 *Feb 14, 2021*
 
 Article describes HttpClientFactory usage best practices. Ignoring network connections allocation recommendations cause networking issues on Azure App Service and not only there. 
+
+
 
 ### [Windows Application Block](https://github.com/oleksandr-bilyk/WindowsApplicationBlock) 
 *Jun 4, 2017*
