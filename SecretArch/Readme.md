@@ -1,10 +1,10 @@
+Azure KeyVault is Azure service for storing secrets. Let's imagine that we need to remove secrets after their expiration that KeyVault doesn't provide. It would be nice to design KeyVault decorator service that will provide missing features. Let's even think about solution that will allow to manage secret lifetime and will use abstract Secret Vault that will run not Azure or onpremise server. I called such concept as Secret Arch. 
 KeyVault or other secret vault capabilities may be extended by secret managing service that will provide additional lifetime features.
 This document contains concept of Managed Secret that is kind of service that extends basic abstract 
 ## Secret Vault features:
 
-1. Potential count of active secrets 100.000+ daily or more.
 1. Secrets may be reset to new value.
-1. Secrets may expire after some period.
+1. Secrets may expire after some period and must be removed.
 1. All operations should be transactional and provide eventual consistency of all aggregates. 
 1. SLA near to CosmosDb which is P99.
 1. No dependency on Azure only services (e.g. Service Buss) to let run in out of Azure.
