@@ -1,7 +1,7 @@
 # F# Retry policy
 
 
-Golden standard for retry logic according to "Service Reliability Engineering" (Google SRE) book has following properties:
+Golden standard for retry logic according to ["Service Reliability Engineering" (Google SRE) book](https://www.goodreads.com/book/show/27968891-site-reliability-engineering) has following properties:
 1. Exponential timeout. Fibonacci series is good for testing.
 2. Random shift to each timeout to avoid throttling.
 3. Infinite cout of retried limited by end time.
