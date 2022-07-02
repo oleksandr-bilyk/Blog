@@ -8,11 +8,41 @@ Golden standard for retry logic according to "Service Reliability Engineering" (
 
 Unfortunately [Polly](https://github.com/App-vNext/Polly) doens't support combination of infinite and limited by time. 
 
+Let's develop fibonacci/exponential infinit sequence generator.
 ```fsharp
-module RetryPolicy
+/// Infinite number generator that starts as fibonacci generator but returns values not bigger than max value.
+let buildFibonacciNumbersWithMaxGenerator (max: int) =
+    let mutable a, b = 0, 1
 
-open System
+    let mutable strategy =
+        fun () ->
+            let newValue = a + b
+            a <- b
+            b <- newValue
+            newValue
 
+    fun () ->
+        let result = strategy ()
+
+        if result <= max then
+            result
+        else
+            strategy <- fun () -> max
+            strategy ()
+```
+Let's write unit test for fibonacci generator
+```fsharp
+[<Fact>]
+let testBuildFibonacciNumbersGenerator() =
+    let generator = buildFibonacciNumbersWithMaxGenerator 40
+    let actual = [ 1 .. 10 ] |> List.map (fun _ -> generator())
+    let expected = [ 1; 2; 3; 5; 8; 13; 21; 34; 40; 40 ]
+    Assert.Equal<int list>(expected, actual)
+```
+
+Now lets develop retry policy as pure function.
+
+```fsharp
 type RetrySideEffects =
     { GetTimeNow: unit -> DateTime
       GetDelay: unit -> TimeSpan
