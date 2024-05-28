@@ -1,3 +1,6 @@
+# Semantic Versioning
+Semantic Versioning should be considered as default software product versioning strategy in any software company. I collected learning materials to make learning path for .NET developers.
+
 [Software Versioning](https://en.wikipedia.org/wiki/Software_versioning) and [Semantic Versioning](https://semver.org/) may be implemented using GitVersion that allows to have consistent versioning strategy cross build script, .NET projects and AzureDevOps pipeline.
 
 GitVersion is powerful tool but good understanding of it may need through a learning path. 
