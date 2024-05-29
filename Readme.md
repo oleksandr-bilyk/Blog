@@ -1,4 +1,4 @@
-# Alex Bilyk - software developer, solution architect, system thinker. 
+# Alex Bilyk - Right Solutions for True Ideas
 
 My name is Alex Bilyk, and this is my professional blog. Here, I write about programming, software development, and architecture.
 
