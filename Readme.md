@@ -1,5 +1,9 @@
 # Alex Bilyk - software developer, solution architect, system thinker. 
 
+My name is Alex Bilyk, and this is my professional blog. Here, I write about programming, software development, and architecture.
+
+My professional [books read list at Goodreads](https://www.goodreads.com/review/list/58286705-oleksandr-bilyk?ref=nav_mybooks&shelf=read) 
+
 ## Archive
 ## 2021
 
