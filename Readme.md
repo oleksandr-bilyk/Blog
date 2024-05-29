@@ -6,6 +6,9 @@
 * Dec 21, 2021 [Semantic Versioning](./Archive/2021/SemanticVersioning.md)
 Semantic Versioning is recommended as the default strategy for software product versioning in any software company. I have compiled a learning path for .NET developers.
 
+* Oct 4, 2021 [Secret Arch](./Archive/2021/SecretArch/Readme.md)
+Azure KeyVault is a service provided by Azure for securely storing secrets. Imagine a scenario where we need to remove secrets post-expiration, a feature that KeyVault does not offer. Designing a KeyVault decorator service that supplements these missing features would be highly beneficial.
+
 * Oct 2, 2021 [Explicit Contract Culture](./Archive/2021/ExplicitContractCulture/Readme.md)
 When integrating products and services, it's advantageous to have explicit data-contracts rather than implicit ones. Dedicating time and effort to extract explicit data-contracts is a worthwhile investment to ensure the product's maintainability.
 

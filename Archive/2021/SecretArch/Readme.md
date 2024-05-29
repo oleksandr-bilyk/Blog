@@ -1,6 +1,6 @@
 # Secret Arch - advanced secret lifecycle management
 
-Azure KeyVault is Azure service for storing secrets. Let's imagine that we need to remove secrets after their expiration that KeyVault doesn't provide. It would be nice to design KeyVault decorator service that will provide missing features. Let's even think about solution that will allow to manage secret lifetime. I called such concept as Secret Arch. 
+Azure KeyVault is a service provided by Azure for securely storing secrets. Imagine a scenario where we need to remove secrets post-expiration, a feature that KeyVault does not offer. Designing a KeyVault decorator service that supplements these missing features would be highly beneficial. Let's even think about solution that will allow to manage secret lifetime. I called such concept as Secret Arch. 
 KeyVault or other secret vault capabilities may be extended by secret managing service that will provide additional lifetime features.
 This document contains concept of Managed Secret that is kind of service that extends basic abstract 
 ## Secret Vault features:
