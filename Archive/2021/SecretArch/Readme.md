@@ -1,8 +1,8 @@
 # Secret Arch - advanced secret lifecycle management
 
-Azure KeyVault is a service provided by Azure for securely storing secrets. Imagine a scenario where we need to remove secrets post-expiration, a feature that KeyVault does not offer. Designing a KeyVault decorator service that supplements these missing features would be highly beneficial. Let's even think about solution that will allow to manage secret lifetime. I called such concept as Secret Arch. 
-KeyVault or other secret vault capabilities may be extended by secret managing service that will provide additional lifetime features.
-This document contains concept of Managed Secret that is kind of service that extends basic abstract 
+Azure Key Vault is a service provided by Azure for securely storing secrets. Imagine a scenario where we need to remove secrets after expiration, a feature that Key Vault does not offer. Designing a Key Vault decorator service that supplements these missing features would be highly beneficial. Let’s think about a solution that will allow us to manage secret lifetime. I call that concept Secret Arch.
+Key Vault or other secret vault capabilities may be extended by a secret management service that will provide additional lifetime features.
+This document contains the concept of Managed Secret, which is a service that extends a basic abstract
 ## Secret Vault features:
 
 1. Secrets may be reset to new value.
@@ -13,43 +13,43 @@ This document contains concept of Managed Secret that is kind of service that ex
 
 ## Concepts
 
-- Allocation is double phase commit process of insert secret into DB and SecretVault.
-- Arch is managed secret entity that is guarantee consistency of set, get, renew and remove operations.
+- Allocation is a two-phase commit process of inserting a secret into DB and SecretVault.
+- Arch is a managed secret entity that guarantees consistency of set, get, renew, and remove operations.
 
 ![Concept](./GeneralConcept.png)
 
 ## Cron
-Chron provides deferred operations. Analog or Azure ServiceBuss deferred message but build using CosmosDB change feed. It can be implemented as No-SQL change feed.
-Chron is internal mechanism that is not visible for client but is used by Allocation, Arch and deallocation services.
+Chron provides deferred operations, like Azure Service Bus deferred messages, but built using Cosmos DB change feed. It can be implemented as a NoSQL change feed.
+Chron is an internal mechanism that is not visible to the client but is used by Allocation, Arch, and deallocation services.
 
 - Consumer - procedure that requests some task to be scheduled
-- Schedule_DB - No-SQL collection with change feed.
+- Schedule_DB - NoSQL collection with change feed.
 - ScheduleObserver - Schedule_DB change feed listening procedure.
-- Scanner - Infinite loop procedure, preferably single instance with [leader election](https://docs.microsoft.com/en-us/azure/architecture/patterns/leader-election) that query Schedule_DB to filter active records.
+- Scanner - Infinite loop procedure, preferably a single instance with [leader election](https://docs.microsoft.com/en-us/azure/architecture/patterns/leader-election) that queries Schedule_DB to filter active records.
 
 ![Cron](./Cron.png)
 
 # Allocation transaction
 
-Secret Allocation is analog of KeyVault set but just should have transactional SecretVault and No-SQL registry update.
+Secret Allocation is analogous to Key Vault set, but it should have a transactional SecretVault and NoSQL registry update.
 
 ## Samples of non-transactional operations between SecretVault and No-SQL Registry.
 
 #### Case 1: SecretVault first and Database second.
-Let's consider case when we insert to SecretVault first and to database Registry second. If first SecretVault was successful and second operation failed then secret may be abandoned in Secret Vault. Second operation may fail by many reasons as process failure or, which is more probable, No-SQL database connectivity issue.
+Let's consider the case when we insert to SecretVault first and to the database Registry second. If the first SecretVault operation was successful and the second operation failed, then the secret may be abandoned in Secret Vault. The second operation may fail for many reasons, such as a process failure or, more likely, a NoSQL database connectivity issue.
 
 ### Case 2: Database first and SecretVault second.
-Let's consider case when we insert to Database first and to SecretVault second. If first operation was successful and second operation failed then database record will be inconsistent. Second operation may fail by many reasons as process failure or, which is more probable, SecretVault connectivity issue.
+Let's consider the case when we insert to Database first and to SecretVault second. If the first operation was successful and the second operation failed, then the database record will be inconsistent. The second operation may fail for many reasons, such as a process failure or, more likely, a SecretVault connectivity issue.
 
 ### Case 3: Two phase commit.
-We may set a secret in tree phases.
-1. Insert Database secret set initialization. That operation should schedule transaction consistency audit operation. Consistency Audit operation may be executed in few minutes after initialization phase.
+We may set a secret in three phases.
+1. Insert Database secret set initialization. That operation should schedule a transaction consistency audit operation. The consistency audit operation may be executed a few minutes after the initialization phase.
 2. Set Secret Vault. 
 3. Insert Database secret commit.
-Consistency audit should remove SecretVault item if it was not committed in database.
+The consistency audit should remove the SecretVault item if it was not committed in the database.
 
 ## Legacy secrets pruning.
-To remove all legacy secrets it is possible to register then for removing using tha same engine that is used in two phase commit. Any secret that had only first phase DB record and don't have second phase record will be automatically removed after few minutes. See Allocation transaction rollback in this document.
+To remove all legacy secrets it is possible to register them for removal using the same engine that is used in the two-phase commit. Any secret that had only the first-phase DB record and does not have the second-phase record will be automatically removed after a few minutes. See Allocation transaction rollback in this document.
 
 ## Allocation two phase transaction Committed - AllocationRequested, keyVaultSet and AllocationCompleted completed.
 
@@ -64,6 +64,6 @@ To remove all legacy secrets it is possible to register then for removing using 
 ![AllocationTransactionRollbackAfterPhase2](./AllocationTransactionRollbackAfterPhase2.png)
 
 ## Arch
-Arch is managed secret entity that is guarantee consistency of set, get, renew and remove operations. Note that Arch service doesn't update Vault itself. If command comes from Allocation to Arch that means that secret is already stored in Vault. When arch decides that secret can be deallocated it calls Deallocation service to defer secret removal. It will provide secret read consistency because if secret in arch is marked as actual then Vault secret will be available for read from Vault at least for few minutes.
+Arch is a managed secret entity that guarantees consistency of set, get, renew, and remove operations. Note that Arch service does not update Vault itself. If a command comes from Allocation to Arch, that means the secret is already stored in Vault. When Arch decides that the secret can be deallocated, it calls the Deallocation service to defer secret removal. It provides secret read consistency because if a secret in Arch is marked as actual, then the Vault secret will be available for read from Vault for at least a few minutes.
 
 ![Arch](./Arch.png)

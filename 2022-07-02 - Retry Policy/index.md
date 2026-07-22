@@ -1,14 +1,14 @@
-# F# Retry policy
+# F# Retry Policy
 
 
-Golden standard for retry logic according to ["Service Reliability Engineering" (Google SRE) book](https://www.goodreads.com/book/show/27968891-site-reliability-engineering) has following properties:
+The golden standard for retry logic according to ["Service Reliability Engineering" (Google SRE) book](https://www.goodreads.com/book/show/27968891-site-reliability-engineering) has the following properties:
 1. Exponential timeout. Fibonacci series is good for testing.
 2. Random shift to each timeout to avoid throttling.
-3. Infinite cout of retried limited by end time.
+3. An infinite count of retries limited by end time.
 
-Unfortunately [Polly](https://github.com/App-vNext/Polly) doens't support combination of infinite and limited by time. 
+Unfortunately [Polly](https://github.com/App-vNext/Polly) doesn't support the combination of infinite retries and time limits.
 
-Let's develop fibonacci/exponential infinit sequence generator.
+Let's develop a fibonacci/exponential infinite sequence generator.
 ```fsharp
 /// Infinite number generator that starts as fibonacci generator but returns values not bigger than max value.
 let buildFibonacciNumbersWithMaxGenerator (max: int) =
@@ -30,7 +30,7 @@ let buildFibonacciNumbersWithMaxGenerator (max: int) =
             strategy <- fun () -> max
             strategy ()
 ```
-Let's write unit test for fibonacci generator
+Let's write a unit test for the fibonacci generator
 ```fsharp
 [<Fact>]
 let testBuildFibonacciNumbersGenerator() =
@@ -40,7 +40,7 @@ let testBuildFibonacciNumbersGenerator() =
     Assert.Equal<int list>(expected, actual)
 ```
 
-Now lets develop retry policy as pure function.
+Now let's develop the retry policy as a pure function.
 
 ```fsharp
 type RetrySideEffects =

@@ -1,6 +1,6 @@
 # From Service Fabric to App Service 
 
-Service Fabric is a very powerful PaaS that is the foundation for many fundamental services in Azure and beyond. However, there are some concerns with the maintenance and general development experience when Service Fabric is chosen as the framework as the time spent in dealing with the framework might outweigh the time dedicated to the app development. For that reason, I decided to migrate our PaaS service from Service Fabric to App Service. This document contains retrospective of challenges that I have encountered during that process. 
+Service Fabric is a very powerful PaaS that is the foundation for many fundamental services in Azure and beyond. However, there are some concerns with maintenance and the general development experience when Service Fabric is chosen as the framework, because the time spent dealing with the framework might outweigh the time dedicated to app development. For that reason, I decided to migrate our PaaS service from Service Fabric to App Service. This document contains a retrospective of the challenges I encountered during that process.
 
 - [From Service Fabric to App Service](#from-service-fabric-to-app-service)
   - [Why migrate from Service Fabric](#why-migrate-from-service-fabric)
@@ -8,9 +8,9 @@ Service Fabric is a very powerful PaaS that is the foundation for many fundament
     - [Service Fabric challenges:](#service-fabric-challenges)
   - [Where to go from Service Fabric](#where-to-go-from-service-fabric)
   - [How to migrate from Service Fabric](#how-to-migrate-from-service-fabric)
-  - [Service Fabric agnostics - Dependency Injection](#service-fabric-agnostics---dependency-injection)
-  - [Geneva Monitoring agent on AppService](#geneva-monitoring-agent-on-appservice)
-  - [Certificates on AppService](#certificates-on-appservice)
+  - [Service Fabric agnostic - Dependency Injection](#service-fabric-agnostic---dependency-injection)
+  - [Geneva Monitoring agent on App Service](#geneva-monitoring-agent-on-appservice)
+  - [Certificates on App Service](#certificates-on-appservice)
     - ["Microsoft.Web/certificates" resource](#microsoftwebcertificates-resource)
     - [Construct new X509Certificate2 from imported byte array](#construct-new-x509certificate2-from-imported-byte-array)
     - [Certificate ephemeral key sets](#certificate-ephemeral-key-sets)
@@ -18,13 +18,13 @@ Service Fabric is a very powerful PaaS that is the foundation for many fundament
   - [SNAT ports limit](#snat-ports-limit)
 - [THE END - No it is just the beginning. Next stop is Containers :)](#the-end---no-it-is-just-the-beginning-next-stop-is-containers-)
  
-## Why migrate from Service Fabric 
-From Service Fabric documentation: 
+## Why migrate from Service Fabric
+From Service Fabric documentation:
 > Azure Service Fabric is a distributed systems platform that makes it easy to package, deploy, and manage scalable and reliable microservices and containers. Service Fabric also addresses the significant challenges in developing and managing cloud native applications. 
 
 ![ServiceFabricSingleSlide](Images/ServiceFabricBidCustomers.png)  
 
-### My Service Fabric learning path 
+### My Service Fabric learning path
 
 1. [Azure Service Fabric for Developer.  Jeffrey Richter on //BUILD/ ](https://channel9.msdn.com/events/Build/2016/B874?term=jeffrey%20richter%20service%20fabric%20course&lang-en=true) 
 2. Jeffrey Richter has video training series of Service Fabric. 
@@ -38,48 +38,48 @@ Covers lots of topics deeply:
    * Scaling 
    * Containers - the "Future of Service Fabric". 
 
-4. [Inside Azure Service Fabric - video series](https://www.youtube.com/watch?v=oIdkbdlnmbw&list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb) Service Fabric PMs meet different customers. Highly recommend watching specially [Cesar Ruiz-Meraz: Azure Event Hubs](https://www.youtube.com/watch?v=OxXGnbHAXB0&list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&index=3). After watching, ask yourself: How would you, as an Architect, design EventGrid/ApatchKafka cluster without Service Fabric? 
+4. [Inside Azure Service Fabric - video series](https://www.youtube.com/watch?v=oIdkbdlnmbw&list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb) Service Fabric PMs meet different customers. Highly recommend watching especially [Cesar Ruiz-Meraz: Azure Event Hubs](https://www.youtube.com/watch?v=OxXGnbHAXB0&list=PLlrxD0HtieHh73JryJJ-GWcUtrqpcg2Pb&index=3). After watching, ask yourself: How would you, as an architect, design an EventGrid/ApacheKafka cluster without Service Fabric?
 
 ![EventHubInsidesVideo](Images/EventHubInsidesVedeo.png) 
 
-### Service Fabric challenges: 
-  1.  General infrastructure Complexity - read at least half of the book before making decision to use it. 
-  2.  Stateful services maintenance - I have not found it in the book but found it in one of conference videos. Service Fabric Stateful Service is literally database engine running on Service Fabric nodes. Service Fabric generates replicatable transaction log which must be truncated. To understand how database transaction logs are implemented read [SQL Server Internals](https://www.amazon.com/Microsoft%C2%AE-Server%C2%AE-Internals-Developer-  Reference/dp/0735626243/ref=sr_1_5?dchild=1&keywords=sql+server+internals+book&qid=1624974027&sr=8-5) book.  
-  3.  Service Fabric Application Model - Service Fabric coupling that doesn't allow to run on other platforms 
-        * Marker interfaces. Problem for dependency Injection and violation of [.NET Framework Design Guidelines](https://www.amazon.com/Framework-Design-Guidelines-Conventions-Libraries/dp/0321246756/ref=sr_1_2?dchild=1&keywords=framework+design+guidelines&qid=1624980035&sr=8-2)   
+### Service Fabric challenges:
+  1.  General infrastructure complexity - read at least half of the book before making a decision to use it.
+  2.  Stateful services maintenance - I have not found it in the book but found it in one of the conference videos. Service Fabric Stateful Service is literally a database engine running on Service Fabric nodes. Service Fabric generates a replicable transaction log which must be truncated. To understand how database transaction logs are implemented, read [SQL Server Internals](https://www.amazon.com/Microsoft%C2%AE-Server%C2%AE-Internals-Developer-  Reference/dp/0735626243/ref=sr_1_5?dchild=1&keywords=sql+server+internals+book&qid=1624974027&sr=8-5) book.
+  3.  Service Fabric Application Model - Service Fabric coupling that doesn't allow it to run on other platforms
+        * Marker interfaces. Problem for dependency injection and violation of [.NET Framework Design Guidelines](https://www.amazon.com/Framework-Design-Guidelines-Conventions-Libraries/dp/0321246756/ref=sr_1_2?dchild=1&keywords=framework+design+guidelines&qid=1624980035&sr=8-2)
         * Remoting - coupling to network communication. Better to use HTTP service discovery. 
         * Service Fabric Mesh never became mature - Kubernetes won. 
   4. Service Fabric SDK 
        * SDK didn't work for weeks, and I had to wait for patches. 
-       * SDK updates installation was enforced and there was no way to escape (couldn’t pin to a specific SDK version). 
-       * SDK froze frequently and PC restart was needed a few times a day. 
-       * Application Model didn't allow to run without SDK. 
+       * SDK updates installation was enforced and there was no way to escape (couldn't pin to a specific SDK version).
+       * SDK froze frequently and a PC restart was needed a few times a day.
+       * Application Model didn't allow running without the SDK.
   5. Conclusion:  
       * Service Fabric is better suited for super highly scaled Stateful Services. 
       * Service Fabric features are only necessary in ~ 5% of design cases.  
       * SDK development experience is suboptimal. 
 
 ## Where to go from Service Fabric 
-  1. Kubernetes is the trend, but no one had enough of Containers experience on our team. We had many small issues even without containers and Kubernetes. 
-  2. App service is the simplest PaaS in Azure and the easiest to migrate to (my original thinking 😊). 
-  There are few options for hosting in App Service: 
-     1. Windows IIS. The oldest and the most basic option on App Service is to use ASP.NET Core Razor. 
-     2. Linux Azure Function without container with .NET Core.  
-     3. Windows Container - Hyper-V - disappointing feature because Server 2019 supports container process isolation, but such new feature was not available on AppService. 
-     4. Linux Container - Process isolation - the most lightweight container and the most compatible with Kubernetes. 
+  1. Kubernetes is the trend, but no one had enough container experience on our team. We had many small issues even without containers and Kubernetes.
+  2. App Service is the simplest PaaS in Azure and the easiest to migrate to (my original thinking 😊).
+  There are a few options for hosting in App Service:
+     1. Windows IIS. The oldest and most basic option on App Service is to use ASP.NET Core Razor.
+     2. Linux Azure Function without a container with .NET Core.
+     3. Windows Container - Hyper-V - a disappointing feature because Server 2019 supports container process isolation, but such a new feature was not available on App Service.
+     4. Linux Container - Process isolation - the most lightweight container and the most compatible with Kubernetes.
 
-## How to migrate from Service Fabric 
-1. Comon logic extraction.  
-Move maximum of common logic into .NET Standard assemblies and reference it from two Applications (Service Fabric and AppService.)
-![CommonLogic](./Images/CommonLogicDiagram.png) 
-2. Dependency Injection 
-Injection of Service Fabric dependencies in ASP.NET Core 2+ allows to use single application entry point to start with different dependencies configuration depending on detection of Service Fabric environment. 
+## How to migrate from Service Fabric
+1. Common logic extraction.
+Move the maximum amount of common logic into .NET Standard assemblies and reference it from two applications (Service Fabric and App Service).
+![CommonLogic](./Images/CommonLogicDiagram.png)
+2. Dependency Injection
+Injection of Service Fabric dependencies in ASP.NET Core 2+ allows a single application entry point to start with different dependency configurations depending on detection of the Service Fabric environment.
 
-## Service Fabric agnostics - Dependency Injection   
-1. Read Dependency Injection book and refactor to Dependency Injection 
-"Dependency Injection Principles, Practices, and Patterns" book is the ultimate source of learning about Dependency Injection on .NET ![DependencyInjectionBook](./Images/DependencyInjectionBook.png) 
+## Service Fabric agnostic - Dependency Injection
+1. Read the Dependency Injection book and refactor to Dependency Injection
+"Dependency Injection Principles, Practices, and Patterns" is the ultimate source of learning about Dependency Injection on .NET. ![DependencyInjectionBook](./Images/DependencyInjectionBook.png)
 
-Mark Seeman is ex-Microsoft architect and now he is a cofounder of a consulting company. He has [very respected blog](https://blog.ploeh.dk/2017/02/02/dependency-rejection/) about architecture, dependency injection and functional programming. 
+Mark Seemann is an ex-Microsoft architect and now he is a cofounder of a consulting company. He has a [very respected blog](https://blog.ploeh.dk/2017/02/02/dependency-rejection/) about architecture, dependency injection, and functional programming.
 \ 
 ![MarkSeeman](Images/MarkSeeman.png) 
 ![ServiceFabricDependencyInjection](./Images/ServiceFabricDependencyInjection.png) 
@@ -122,15 +122,15 @@ else
 
 3. Clean up ASP.NET Core Startup.cs  
   * Startup must be ServiceFabric agnostic. 
-  * Startup may contain only services that will work with both Service Fabric and Self hosted application. 
-  * Use [Options pattern in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options?view=aspnetcore-5.0). Options pattern allows to avoid options hardcoding and init options using Dependency Injection 
+  * Startup may contain only services that will work with both Service Fabric and self-hosted applications.
+  * Use the [Options pattern in ASP.NET Core](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options?view=aspnetcore-5.0). The Options pattern helps avoid options hardcoding and initialize options using Dependency Injection.
 
   ```csharp 
   public sealed class ConfigureHttpsRedirectionOptions : IConfigureOptions<HttpsRedirectionOptions> 
   { 
       private readonly Domain.CommonConfiguration.IAppSettings appSettings; 
 
-      // Dependency injection of settings that may come either from Service Fabric Configuration or from Self Hosted app Environment Variables. 
+      // Dependency injection of settings that may come either from Service Fabric Configuration or from self-hosted app environment variables.
       public ConfigureHttpsRedirectionOptions(Domain.CommonConfiguration.IAppSettings appSettings) 
       { 
           this.appSettings = appSettings; 
@@ -145,12 +145,12 @@ else
   }
   ```
 
-## Geneva Monitoring agent on AppService 
-Geneva Monitoring Agents run in First Party subscriptions as AppService extension. Read Geneva Docs to [Setting Up an Azure App Service to Collect Logs and Metrics](https://eng.ms/docs/products/geneva/getting_started/environments/azurewebapp). 
+## Geneva Monitoring agent on App Service
+Geneva Monitoring Agents run in first-party subscriptions as an App Service extension. Read Geneva Docs for [Setting Up an Azure App Service to Collect Logs and Metrics](https://eng.ms/docs/products/geneva/getting_started/environments/azurewebapp).
 
-## Certificates on AppService
-On Service Fabric we were importing KeyVault certificates to VMSS machine profile using VMSS KeyVault extension.  
-There are few ways to work with certificates on AppService: 
+## Certificates on App Service
+On Service Fabric we were importing Key Vault certificates to VMSS machine profile using the VMSS Key Vault extension.
+There are a few ways to work with certificates on App Service:
 1. "Microsoft.Web/certificates" resource. 
 2. Construct new X509Certificate2 from imported byte array. 
 3. Certificate ephemeral key sets. 

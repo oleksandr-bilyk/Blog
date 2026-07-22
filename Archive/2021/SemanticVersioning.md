@@ -1,16 +1,16 @@
 # Semantic Versioning
-Semantic Versioning should be considered as default software product versioning strategy in any software company. I collected learning materials to make learning path for .NET developers.
+Semantic Versioning should be considered the default software product versioning strategy in any software company. I collected learning materials to build a learning path for .NET developers.
 
-[Software Versioning](https://en.wikipedia.org/wiki/Software_versioning) and [Semantic Versioning](https://semver.org/) may be implemented using GitVersion that allows to have consistent versioning strategy cross build script, .NET projects and AzureDevOps pipeline.
+[Software Versioning](https://en.wikipedia.org/wiki/Software_versioning) and [Semantic Versioning](https://semver.org/) may be implemented using GitVersion, which allows a consistent versioning strategy across build scripts, .NET projects, and Azure DevOps pipelines.
 
-GitVersion is powerful tool but good understanding of it may need through a learning path. 
+GitVersion is a powerful tool, but a good understanding of it may require a learning path.
 
 1. [Semantic Versioning](https://semver.org/)
 Given a version number MAJOR.MINOR.PATCH. Semantic Versioning provides version numbers and the way they change convey meaning about the underlying code and what has been modified from one version to the next.
 1. [Control your GitHub releases with GitVersion and GitReleaseManager](https://www.youtube.com/watch?v=SlM02V1tkSc) 
-This vides is related to GitHub but provides good expertise overview about GitVersion related topics.
+This video is related to GitHub but provides a good overview of GitVersion-related topics.
 1. [Install and use a .NET local tool using the .NET CLI](https://docs.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use)
-As prerequisite for GitVersion it is useful to have basic understanding of .NET local tools.
+As a prerequisite for GitVersion, it is useful to have a basic understanding of .NET local tools.
 1. GitVersion site provides detailed documentation https://gitversion.net/ 
     1. [GitVersion .NET local tool installation](https://gitversion.net/docs/usage/cli/installation) 
 GitVersion's command line interface can be installed and consumed in many different ways.
@@ -26,7 +26,7 @@ GitVersion works with several workflows. This page is split up into two sections
 Version supports a few different versioning modes. They are described in detail.
 
 # Query current GitVersion from git repository for build scripting.
-Build script may query current GitVersion JSON to generate some build artifacts. 
+A build script may query the current GitVersion JSON to generate build artifacts.
 Current state of GitVersion [version variables](https://gitversion.net/docs/reference/variables) after [installation](https://gitversion.net/docs/usage/cli/installation) may be queried from command line.
 Initialize .NET Tools once in source code folder.
 ``` dotnet tool restore ```

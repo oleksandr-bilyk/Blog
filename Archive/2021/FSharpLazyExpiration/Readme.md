@@ -2,12 +2,12 @@
 
 .NET has [Lazy class](https://docs.microsoft.com/en-us/dotnet/api/system.lazy-1?view=net-5.0) .
 F# has [Lazy Expression](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/lazy-expressions).
-Had tried to create Lazy load of some object with expiration (e.g. configuration with refresh timeout).
-Implementation had to have following features:
+I had tried to create lazy loading of some object with expiration (e.g. configuration with a refresh timeout).
+The implementation had to have the following features:
 1. Be fully testable. Only pure functions may be tested properly because they have fully deterministic behavior.
 2. Be thread-safe.
 
-Initially I was thinking about C# class. Note that C# code in this article may contains only class signature with method's logic ommited.
+Initially I was thinking about a C# class. Note that C# code in this article may contain only the class signature with the method's logic omitted.
 
 ```csharp
 public class LazyExpirable<TValue> {
@@ -43,7 +43,7 @@ public class LazyExpirableFactory {
     new LazyExpirable(getValue, expireOn, this.dateTimeProvider);
 }
 ```
-But what if lifecycle will be not just time span between DateTome.UtcNow snapshots? It would be great to have more generic way to define lifecycle. Let's define lifecycle as some object that defines if value is steal alive. Value will be created with lifecycle.
+But what if the lifecycle will not just be a time span between DateTime.UtcNow snapshots? It would be great to have a more generic way to define lifecycle. Let's define lifecycle as some object that defines whether a value is still alive. The value will be created with lifecycle.
 ```csharp
 public interface IDateTimeProvider {
   DateTime GetUtcNow();
@@ -75,7 +75,7 @@ public sealed class LifecycleByTimeFactory {
   }
   public ILifecycle NewLifecycle(TimeSpan timeSpan) => new LifecycleByTime(this.dateTimeProvider, timeSpan); 
 }
-/// Aggrigates values and its lifecycle.
+/// Aggregates values and its lifecycle.
 public class ValueWithLifecycle<TValue>{
   public ValueWithLifecycle(TValue value, ILifecycle lifecycle);
   public TValue Value { get; } 
@@ -115,9 +115,9 @@ public class LazyExpirableFactory {
     new LazyWithLifecycle(NewValueWithLifecycle);
 }
 ```
-Yes, this is now SOLID OOP may look like.
+Yes, this is what SOLID OOP may look like.
 
-Now let's look at axactly the same logic using F#. F# support .NET OOP Dependency Injection but we may compose our logic using more functional technique called [Dependency Rejection](https://blog.ploeh.dk/2017/02/02/dependency-rejection/).
+Now let's look at exactly the same logic using F#. F# supports .NET OOP Dependency Injection, but we may compose our logic using a more functional technique called [Dependency Rejection](https://blog.ploeh.dk/2017/02/02/dependency-rejection/).
 ```fsharp
 let lazyWithLifecycle getValueWithLifecycle =
     let mutable state = lazy(getValueWithLifecycle())
@@ -134,7 +134,7 @@ let newTimeSpanLifecyle(timeSpan: TimeSpan) =
 let lazyTemp get timeSpan = 
     lazyWithLifecycle (fun () -> get(), newTimeSpanLifecyle(timeSpan))
 ```
-`lazyWithLifecycle` function is testable because it takes only `getValueWithLifecycle` argument that is function that returns value and lifecycle.
+`lazyWithLifecycle` function is testable because it takes only the `getValueWithLifecycle` argument, which is a function that returns a value and a lifecycle.
 Let's consider more verbose syntax for F# beginners who are not familiar with F# type inference.
 ```fsharp
 // Function that returns bool.
@@ -157,7 +157,7 @@ let lazyWithLifecycle<'TValue>(getValueWithLifecycle: GetValueWithLifecycle<'TVa
             let (valueNew: 'TValue, _) = newState.Force()
             valueNew
 ```
-Now let's write test for `lazyWithLifecycle` function. 
+Now let's write a test for the `lazyWithLifecycle` function.
 ```fsharp
 module LazyTemporaryTest
 
@@ -230,8 +230,8 @@ let ``Test Lazy Temp as steps script`` () =
         | _ -> failwith "ResultTest expected."
 
 ```
-You may note that C# OOP SOLID decomposition takes about 100+ lines of code. F# functional takes less than 20 lines of code. 
+You may note that C# OOP SOLID decomposition takes about 100+ lines of code. F# functional code takes less than 20 lines of code.
 F# is not always much shorter than C#. I was collecting different statistics from many successful companies and found that functional F# is about 5+ times smaller than C# OOP. 
 Here is one of statistics provided by [Don Syme](https://en.wikipedia.org/wiki/Don_Syme).
 ![DonSymeStatistics](./images/DonSymeStatistics.png)
-Last 15 years C# evolves by providing elements of functional programming which is great. However it makes C# look like Chainsaw in comparison to F# Light Saber (see [the adult meme on redit](https://www.reddit.com/r/fsharp/comments/gonlnb/f_5_vs_c_9_nsft/) about it). This is the explanation why F# has not become the mainstream.
+Over the last 15 years, C# has evolved by providing elements of functional programming, which is great. However, it makes C# look like a chainsaw in comparison to F# light saber (see [the adult meme on Reddit](https://www.reddit.com/r/fsharp/comments/gonlnb/f_5_vs_c_9_nsft/) about it). This is one explanation for why F# has not become mainstream.
